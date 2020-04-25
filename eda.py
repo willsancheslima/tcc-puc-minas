@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import pymongo
 import matplotlib.pyplot as plt
 import requests
@@ -77,24 +78,54 @@ def flattened_df(db, col):
     #    print(col)
     #print(df.pessoa_cnae_secao.value_counts())
 
+def printwhf(to_print, header):
+    print()
+    print('======== '+header+' ========')
+    print()
+    print(to_print)
+    print()
+    print()
+
+def print_all_df(df):
+    with pd.option_context('display.max_rows', None, 'display.max_columns', None):
+        print(df)
+
 df = flattened_df('ceis', 'registro')
 
-print(df.head)
+dataInicioSancao = pd.to_datetime(df['dataInicioSancao'])
+#plt.hist(dataInicioSancao.dropna(), bins=30)
+#plt.show()
 
-print(df.describe)
+#print(df['dataInicioSancao'])
+#df['dataInicioSancao'] = dataInicioSancao
+#print(df['dataInicioSancao'])
 
-print(df.pessoa_tipoPessoa.value_counts())
 
-print(df.pessoa_municipio_uf_nome.value_counts())
+df['orgaoSancionador_siglaUf'] = df['orgaoSancionador_siglaUf'].str.upper()
+df['orgaoSancionador_siglaUf'].replace([''], np.nan, inplace=True)
+#print_all_df(df['orgaoSancionador_siglaUf'])
+#print(df.orgaoSancionador_siglaUf.value_counts())
 
+#df_sem_pf = df.query('pessoa_tipoCodigo != "CPF"')
+#print(df_sem_pf.pessoa_cnae_secao.value_counts())
+df['pessoa_cnae_secao'].replace(['Sem informação'], np.nan, inplace=True)
 print(df.pessoa_cnae_secao.value_counts())
+print(df.pessoa_cnae_secao.count())
 
-print(df.orgaoSancionador_nome.value_counts())
+'''
+printwhf(df.head, 'df.head')
 
-print(df.orgaoSancionador_siglaUf.value_counts())
+printwhf(df.describe, 'df.describe')
 
-print(df.orgaoSancionador_poder.value_counts())
+printwhf(df.pessoa_tipoPessoa.value_counts(), 'df.pessoa_tipoPessoa.value_counts()')
 
+printwhf(df.pessoa_municipio_uf_nome.value_counts(), 'df.pessoa_municipio_uf_nome.value_counts()')
 
+printwhf(df.pessoa_cnae_secao.value_counts(), 'df.pessoa_cnae_secao.value_counts()')
 
+printwhf(df.orgaoSancionador_nome.value_counts(), 'df.orgaoSancionador_nome.value_counts()')
 
+printwhf(df.orgaoSancionador_siglaUf.value_counts(), 'df.orgaoSancionador_siglaUf.value_counts()')
+
+printwhf(df.orgaoSancionador_poder.value_counts(), 'df.orgaoSancionador_poder.value_counts()')
+'''
