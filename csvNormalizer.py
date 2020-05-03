@@ -1,5 +1,11 @@
 
 import pandas as pd
+import numpy as np
+
+# function to get unique values 
+def unique(list1): 
+    x = np.array(list1) 
+    return np.unique(x)
 
 names = ['TIPO DE PESSOA','CPF OU CNPJ DO SANCIONADO','NOME INFORMADO PELO ORGAO SANCIONADOR','RAZAO SOCIAL - CADASTRO RECEITA','NOME FANTASIA - CADASTRO RECEITA','NUMERO DO PROCESSO','TIPO SANCAO','DATA INICIO SANCAO','DATA FINAL SANCAO','ORGAO SANCIONADOR','UF ORGAO SANCIONADOR','ORIGEM INFORMACOES','DATA ORIGEM INFORMACOES','DATA PUBLICACAO','PUBLICACAO','DETALHAMENTO','ABRAGENCIA DEFINIDA EM DECISAO JUDICIAL','FUNDAMENTACAO LEGAL','DESCRICAO DA FUNDAMENTACAO LEGAL','DATA DO TRÂNSITO EM JULGADO','COMPLEMENTO DO ORGAO','OBSERVACOES']
 
@@ -18,4 +24,13 @@ df['ESTADO'] = df['UF ORGAO SANCIONADOR'].replace(uf_sigla, uf_nome)
 #print(df['ESTADO'])
 
 df.to_csv('sources/CEIS_NORMALIZED.csv', index=False)
+
+
+# Obter valores únicos da serie SANCIONADOR
+df = pd.read_csv('sources/CEIS_NORMALIZED.csv', encoding='utf-8')
+orgao_sancionador = df['ORGAO SANCIONADOR']
+
+df_unique = pd.DataFrame(unique(orgao_sancionador))
+
+df_unique.to_csv('sources/orgao_unique.csv', index=False)
 

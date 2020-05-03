@@ -1,26 +1,14 @@
-from flatten_json import flatten
-import json
 import pandas as pd
 import pymongo
-import requests
+import json
+from flatten_json import flatten
+
 
 def connect_mongo(db, col, host='localhost', port=27017):
     client = pymongo.MongoClient(host, port)
     db = client[db]
     return db[col]
 
-def insertPagedApiData(db, col, url, pg_parameter, offset=1):
-    col = connect_mongo(db, col)
-    parameters = {pg_parameter: offset}
-    status = 200
-    while(status == 200):
-    #while(status == 200 and parameters[pg_parameter] <=2):
-        response = requests.get(url, pg_parameter)
-        col.insert_many(response.json())
-        status = response.status_code
-        print('pagina '+str(parameters[pg_parameter])+' => status = '+str(status))
-        parameters[pg_parameter] += 1
-        
 def insertCol(db, col, data):
     col = connect_mongo(db, col)
     result = col.insert(data)
@@ -60,22 +48,12 @@ def printwhf(to_print, header):
 
 
 '''
-# QUERY MONGO_DB
+# QUERY PANDAS
 #df_sem_pf = df.query('pessoa_tipoCodigo != "CPF"')
 #print(df_sem_pf.pessoa_cnae_secao.value_counts())
 df['pessoa_cnae_secao'].replace(['Sem informação'], np.nan, inplace=True)
 #print(df.pessoa_cnae_secao.value_counts())
 #print(df.pessoa_cnae_secao.count())
-
-def popula_ceis(paginas=1):
-    col = connect_mongo('ceis', 'registro')
-    parameters = {"pagina": 1}
-    while(parameters['pagina'] <= paginas):
-        response = requests.get('http://www.transparencia.gov.br/api-de-dados/ceis', parameters)
-        result = col.insert_many(response.json())
-        print('pagina = '+str(parameters['pagina'])+' => '+str(result))
-        parameters['pagina'] += 1
-
 
 def read_mongo(db, col, query={}, host='localhost', port=27017, username=None, password=None, no_id=False):
     """ Read from Mongo and Store into DataFrame """
