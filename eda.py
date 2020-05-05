@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import utils as utl
+#pylint:disable=E1101
 
 
 data = utl.getListFromMongoCol('ceis', 'register')
@@ -24,71 +25,132 @@ df['orgaoSancionador_siglaUf'] = df['orgaoSancionador_siglaUf'].str.upper()
 # identifiquei estados vazios => trocando para valor nao numerico => https://pandas.pydata.org/pandas-docs/stable/user_guide/missing_data.html
 df['orgaoSancionador_siglaUf'].replace([''], np.nan, inplace=True)
 # contagem atualizada apos correcao
-### print(df.orgaoSancionador_siglaUf.value_counts())
+#>>> print(df.orgaoSancionador_siglaUf.value_counts())
 
 # convertendo series dataInicioSancao de string para dateTime
 dataInicioSancao = pd.to_datetime(df['dataInicioSancao'])
 df['dataInicioSancao'] = dataInicioSancao
 # verificando a distribuicao de datas
-### plt.hist(df['dataInicioSancao'].dropna(), bins=30)
-### plt.show()
+#>>> plt.hist(df['dataInicioSancao'].dropna(), bins=30)
+#>>> plt.show()
 
 # convertendo serie dataFimSancao de string para dateTime utilizando "coerce"
 # passing errors=’coerce’ will force an out-of-bounds date to NaT, in addition to forcing non-dates (or non-parseable dates) to NaT
 dataFimSancao = pd.to_datetime(df['dataFimSancao'], errors='coerce') 
 df['dataFimSancao'] = dataFimSancao
-### plt.hist(dataFimSancao.dropna(), bins=30)
-### plt.show()
+#>>> plt.hist(dataFimSancao.dropna(), bins=30)
+#>>> plt.show()
 
-# no grafico anterior identifiquei valores extremos da serie dataFimSancao
-# vou pegar os indices das datas posteriores a 2030 para analise
+# no grafico anterior identifiquei valores extremos na serie dataFimSancao
+# filtrando os indices das datas posteriores a 2030 para analise
 dataFimSancao_outlier_boolean = df['dataFimSancao'] > '31/12/2030'
 # filtrando apenas datas posteriores a 2030 na serie dataFimSancao para analise
 dataFimSancao_outlier_dates = dataFimSancao[dataFimSancao_outlier_boolean]
 # visualizando as datas posteriores a 2030
-### print(dataFimSancao_outlier_dates.value_counts())
-### print(sum(dataFimSancao_outlier_dates.value_counts()))
+#>>> print(dataFimSancao_outlier_dates.value_counts())
+#>>> print(sum(dataFimSancao_outlier_dates.value_counts()))
 # identifiquei 25 datas acima de 2030 sendo que 14 sao exatamente o mesmo dia => 2039-10-07
 
 # filtrando apenas datas posteriores a 2030 no dataframe para analise
 df_dataFimSancao_outlier = df[dataFimSancao_outlier_boolean]
 
 # verificando se existe alguma relacao entre as datas e os tipos de sancoes
-### print(df_dataFimSancao_outlier['tipoSancao_descricaoResumida'].value_counts())
+#>>> print(df_dataFimSancao_outlier['tipoSancao_descricaoResumida'].value_counts())
 # aqui tambem identifiquei 14 tipos iguais de tipoSancao => "Decisao judicial liminar/cautelar que impeça contratacao"
 
 # verificando se as 14 datas iguais tem relacao com os 14 tipos de sancoes iguais
-### print(df_dataFimSancao_outlier[['tipoSancao_descricaoResumida','dataFimSancao']].sort_values(by=['tipoSancao_descricaoResumida']))
-### print()
-### print()
-### print(df_dataFimSancao_outlier[['dataFimSancao','tipoSancao_descricaoResumida']].sort_values(by=['dataFimSancao']))
+#>>> print(df_dataFimSancao_outlier[['tipoSancao_descricaoResumida','dataFimSancao']].sort_values(by=['tipoSancao_descricaoResumida']))
+#>>> print(df_dataFimSancao_outlier[['dataFimSancao','tipoSancao_descricaoResumida']].sort_values(by=['dataFimSancao']))
 
 # a analise acima nao foi conclusiva, vamos entao buscar mais informacoes
 # subtraindo a data inicial da data final para obter o prazo das sancoes em dias
 prazoSancao = dataFimSancao - dataInicioSancao
 # describe para analisar os dados ref prazo das sancoes
-print(prazoSancao.describe())
+#>>> print(prazoSancao.describe())
+
 # no describe acima identifiquei que o min e negativo, o que nao faz sentido
-# filtrando os prazos negativos
+# vamos limpar essas datas do dataframe
+# filtrando os prazos negativos (onde dataFimSancao < dataInicioSancao)
 dataFimSancao_negative_boolean = dataFimSancao < dataInicioSancao
-# obtendo a quantidade de linhas afetadas para avaliar a extensao
-print(dataFimSancao_negative_boolean.value_counts())
-# removendo essas linhas do dataframe para nao interferir nas analises
-df_dataOk = df[~dataFimSancao_negative_boolean]
-prazoSancao = df_dataOk['dataFimSancao'] - df_dataOk['dataInicioSancao']
-# describe para verificar os numeros
-print(prazoSancao.describe())
-# removendo as linhas com datas extremas para nao interferis nas alises
-df_dataOk = df_dataOk[~dataFimSancao_outlier_boolean]
-prazoSancao = df_dataOk['dataFimSancao'] - df_dataOk['dataInicioSancao']
-# verificando os numeros apos remover prazos extremos e negativos
-print(prazoSancao.describe())
-print()
-print()
-print()
-# describe da serie prazoSancao_outlier para confrontar com os numeros de prazoSancao
+# substituindo essas datas por NaT no dataframe
+df.at[dataFimSancao_negative_boolean, 'dataFimSancao'] = pd.Timedelta('nat')
+# atribuindo os valores atualizados a serie dataFimSancao
+dataFimSancao = df['dataFimSancao']
+# recalculando o prazo
+prazoSancao = dataFimSancao - dataInicioSancao
+# visualizando o describe para validar a correcao
+#>>> print(prazoSancao.describe())
+
+# continuando a analise de datas extremas
+# desconsiderando as datas extremas para nao interferir nas analises
+df_dataOk = df[~dataFimSancao_outlier_boolean]
+prazoSancaoOk = df_dataOk['dataFimSancao'] - df_dataOk['dataInicioSancao']
+# verificando os numeros com describe apos desconsiderar valores extremos de dataFimSancao
+#>>> print(prazoSancaoOk.describe())
+# verificando o describe da serie prazoSancao_outlier para confrontar com o describe da serie prazoSancaook
 prazoSancao_outlier = df_dataFimSancao_outlier['dataFimSancao'] - df_dataFimSancao_outlier['dataInicioSancao']
-print(prazoSancao_outlier.describe())
-# verifiquei que a media de prazo em dias do daframe df_dataOk e quase cinco vezes menor que do  apenas 20% do df_dataFimSancao_outlier
-# isso nos leva a crer que essas datas estão incorretas
-# @TO-DO remover as datas outliers do dataframe df
+#>>> print(prazoSancao_outlier.describe())
+# verifiquei que a media de prazo em dias do daframe df_dataOk e quase cinco vezes menor que do dataframe df_dataFimSancao_outlier
+# visualizando a contagem ordenada dos anos para ilustrar melhor a situacao
+dataFimSancao_year = pd.DatetimeIndex(df['dataFimSancao']).year
+#>>> print(dataFimSancao_year.value_counts().sort_index())
+# verifiquei que essa quantidade representa 0.0018% do total de datas validas da serie dataFimSancao
+# vamos entao definir essas datas como NaT, para nao interferirem nas analises de prazos, visto que sao 5 vezes superiores
+# atribuindo valor NaT para todas datas superiores a 2030
+df.loc[df['dataFimSancao'] > '31/12/2030', 'dataFimSancao'] = pd.Timedelta('nat')
+# verificando se das datas foram efetivamente substituidas
+#>>> print((df['dataFimSancao'] > '31/12/2030').value_counts())
+
+# vamos então retomar as analises das datas exibindo o histograma atualizada da dataFimSancao
+#>>> plt.hist(dataFimSancao.dropna(), bins=30)
+#>>> plt.show()
+# agora temos um distribuicao mais homogenea da serie dataFimSancao, sem datas futuras extremas
+
+# apos validacoes e limpezas, vamos obter os prazos das sancoes novamente para analises
+prazoSancao = dataFimSancao - dataInicioSancao
+# describe para analisar os indicadores ref aos prazos das sancoes
+#>>> print(prazoSancao.describe(include='all'))
+# obtendo o valor medio em meses
+prazoSancao_mean = prazoSancao.describe().loc['mean']
+prazoSancao_meses = prazoSancao_mean / np.timedelta64(1, 'M')
+#>>> print(round(prazoSancao_meses))
+# obtivemos um prazo medio de 60 meses
+# mas o desvio padrao e muito alto, precisamos analisar mais para entender melhor essas caracteristicas
+
+# analisando prazos das sancoes por tipo de sancao
+df_tipoSancao = df['tipoSancao_descricaoResumida'].unique()
+#print(df_tipoSancao)
+prazoSancao_tipoSancao = []
+for tipoSancao in df_tipoSancao:
+    df_tipoSancao_boolean = df['tipoSancao_descricaoResumida'] == tipoSancao
+    df_tipoSancao_it = df[df_tipoSancao_boolean]
+    prazo_tipoSancao = (df_tipoSancao_it["dataFimSancao"] - df_tipoSancao_it["dataInicioSancao"])
+    prazoSancao_tipoSancao.append(prazo_tipoSancao.describe())
+    print(tipoSancao)
+    print(prazo_tipoSancao.describe())
+    print()
+#for item in prazoSancao_tipoSancao:
+#    print(item[1])
+
+
+print()
+print()
+print()
+print()
+print()
+
+
+# analisando prazos das sancoes por estado
+df_uf = df['pessoa_municipio_uf_nome'].unique()
+#print(type(df_uf))
+prazoSancao_uf = []
+for uf in df_uf:
+    df_uf_boolean = df['pessoa_municipio_uf_nome'] == uf
+    df_uf_it = df[df_uf_boolean]
+    prazo_uf = (df_uf_it["dataFimSancao"] - df_uf_it["dataInicioSancao"])
+    prazoSancao_uf.append(prazo_uf.describe())
+    print(uf)
+    print(prazo_uf.describe())
+    print()
+#for item in prazoSancao_uf:
+#    print(item[1])
