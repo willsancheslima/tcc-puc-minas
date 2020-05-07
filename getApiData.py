@@ -1,11 +1,8 @@
 import requests
-import json
 import utils as utl
 
-#utl.insertMongoPagedApiData('ceis', 'register', 'http://www.transparencia.gov.br/api-de-dados/ceis', 'pagina')
-
 db = 'ceis'
-col = 'register'
+col = 'register_atlz'
 url = 'http://www.transparencia.gov.br/api-de-dados/ceis'
 pg_parameter = 'pagina'
 offset = 1
