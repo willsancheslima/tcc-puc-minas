@@ -2,7 +2,7 @@ import requests
 import utils as utl
 
 db = 'ceis'
-col = 'register_atlz'
+col = 'register'
 url = 'http://www.transparencia.gov.br/api-de-dados/ceis'
 pg_parameter = 'pagina'
 offset = 1
