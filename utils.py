@@ -1,7 +1,9 @@
 import pandas as pd
+import numpy as np
 import pymongo
 import json
 from flatten_json import flatten
+import matplotlib.pyplot as plt
 
 
 def connect_mongo(db, col, host='localhost', port=27017):
@@ -28,6 +30,21 @@ def flattenListAsDF(data):
     #for col in df.columns: 
     #    print(col)
     #print(df.pessoa_cnae_secao.value_counts())
+
+def groupedBarWithLabels(bar1, bar2, labels, 
+    labelBar1='labelBar1', labelBar2='labelBar2', ylabel='ylabel', title='title'):
+    x = np.arange(len(labels))  # the label locations
+    width = 0.4  # the width of the bars
+    fig, ax = plt.subplots()
+    ax.bar(x - width/2, bar1, width, label=labelBar1)
+    ax.bar(x + width/2, bar2, width, label=labelBar2)
+    fig.tight_layout()
+    ax.set_ylabel(ylabel)
+    ax.set_title(title)
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels, rotation=90)
+    ax.legend()
+    plt.show()
 
 def jsonprint(obj):
     # create a formatted string of the Python JSON object
