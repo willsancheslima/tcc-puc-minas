@@ -63,53 +63,8 @@ def printwhf(to_print, header):
     print()
     print()
 
-
-'''
-# QUERY PANDAS
-#df_sem_pf = df.query('pessoa_tipoCodigo != "CPF"')
-#print(df_sem_pf.pessoa_cnae_secao.value_counts())
-df['pessoa_cnae_secao'].replace(['Sem informação'], np.nan, inplace=True)
-#print(df.pessoa_cnae_secao.value_counts())
-#print(df.pessoa_cnae_secao.count())
-
-def read_mongo(db, col, query={}, host='localhost', port=27017, username=None, password=None, no_id=False):
-    """ Read from Mongo and Store into DataFrame """
-    # Connect to MongoDB
-    col = connect_mongo('ceis', 'registro')
-    # Make a query to the specific DB and Collection
-    cursor = col.find(query)
-    # Expand the cursor and construct the DataFrame
-    df =  pd.DataFrame(list(cursor))
-    # Delete the _id
-    if no_id:
-        del df['_id']
-    return df
-
-def edaPessoaCnaeSecao():
-    col = connect_mongo('ceis', 'registro')
-    #data = pd.DataFrame(list(col.find()))
-
-    result = col.aggregate( [ { '$project': { 'pessoa.cnae.secao': 1 } } ] )
-    result_list = list(result)
-    cnae_secao = []
-    for row in result_list:
-        cnae_secao.append(row['pessoa']['cnae'])
-    #print(cnae_secao)
-    df_cnae_secao = pd.DataFrame(cnae_secao)
-    #print(df_cnae_secao.head)
-    #print(df_cnae_secao.shape)
-    #print(df_cnae_secao.describe())
-    #print(df_cnae_secao.count())
-    print(df_cnae_secao['secao'].value_counts())
-
-def edaTipoPessoa():
-    col = connect_mongo('ceis', 'registro')
-    result = col.aggregate( [ { '$project': { 'pessoa.tipoPessoa': 1 } } ] )
-    result_list = list(result)
-    pessoa_tipo = []
-    for row in result_list:
-        pessoa_tipo.append(row['pessoa'])
-    #print(pessoa_tipo)
-    df_pessoa_tipo = pd.DataFrame(pessoa_tipo)
-    print(df_pessoa_tipo['tipoPessoa'].value_counts())
-'''
+def serieToPercQtdeCSV(serie, serieName):
+    perc = serie.value_counts(normalize=True)*100
+    qtde = serie.value_counts()
+    dfPercQtde = pd.concat([perc, qtde], axis=1, sort=False)
+    dfPercQtde.to_csv('sources/graph.'+serieName+'.csv')
